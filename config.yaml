@@ -1,0 +1,14 @@
+server:
+  host: "localhost"
+  port: 3000
+  metricsPort: 3001
+
+tzkt:
+  url: "https://api.tzkt.io"
+
+db:
+  host: "localhost"
+  port: 5432
+  user: "postgres"
+  password: "postgres"
+  database: "delegations"
