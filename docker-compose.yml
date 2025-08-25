@@ -7,8 +7,26 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_USER: &postgres "postgres"
+      POSTGRES_PASSWORD: *postgres
       POSTGRES_DB: "delegations"
     volumes:
       - /var/run/db:/var/lib/postgresql/data
+
+  api:
+    hostname: "tezos_delegations_service"
+    container_name: "tezos_delegations_service"
+    environment:
+      POSTGRES_USER: *postgres
+      POSTGRES_PASSWORD: *postgres
+    build: .
+    volumes:
+      - ./config-docker.yaml:/config.yaml
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+    depends_on:
+      - db
+
+volumes:
+  config.yaml: {}

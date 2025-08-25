@@ -1,4 +1,4 @@
-FROM golang:1.23-alpine as go-builder
+FROM golang:1.24-alpine as go-builder
 ENV GIN_MODE=release
 WORKDIR /app
 COPY . .
