@@ -18,13 +18,22 @@ type DelegationsWatcher struct {
 	config     config.Config
 	httpClient httpclient.HttpInterface
 	db         db.DBInterface
+	tzktClient TzktClient
+}
+
+type TzktClient interface {
+	Connect(ctx context.Context) error
+	SubscribeToHead() error
+	Listen() <-chan events.Message
 }
 
 func NewDelegationsWatcher(config config.Config, httpClient httpclient.HttpInterface, db db.DBInterface) *DelegationsWatcher {
+	wsUrl := fmt.Sprintf("%s/v1/ws", config.Tzkt.Url)
 	return &DelegationsWatcher{
 		config:     config,
 		httpClient: httpClient,
 		db:         db,
+		tzktClient: events.NewTzKT(wsUrl),
 	}
 }
 
@@ -59,7 +68,7 @@ func (dw *DelegationsWatcher) Start() {
 	}
 
 	//all past delegations are retrived from tzkt, start watching for new blocks
-	go dw.WatchNewBlocks()
+	go dw.WatchNewBlocks(context.Background())
 
 	//insert all delegations into database
 	log.Infof("Number of delegations: %v, inserting into database", len(allDelegations))
@@ -74,17 +83,15 @@ func (dw *DelegationsWatcher) Start() {
 	// go dw.WatchNewBlocks()
 }
 
-func (dw *DelegationsWatcher) WatchNewBlocks() {
-
+func (dw *DelegationsWatcher) WatchNewBlocks(ctx context.Context) {
 	log.Info("Start watching for new blocks...")
-
-	wsUrl := fmt.Sprintf("%s/v1/ws", dw.config.Tzkt.Url)
-	tzkt := events.NewTzKT(wsUrl)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	for {
-		if err := tzkt.Connect(ctx); err != nil {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+		if err := dw.tzktClient.Connect(ctx); err != nil {
 			log.Errorf("Failed to connect to tzkt: %v, retrying in 5 seconds", err)
 			select {
 			case <-time.After(5 * time.Second):
@@ -96,12 +103,12 @@ func (dw *DelegationsWatcher) WatchNewBlocks() {
 		log.Info("Connected to tzkt events hub")
 
 		//subscribe to head events
-		if err := tzkt.SubscribeToHead(); err != nil {
+		if err := dw.tzktClient.SubscribeToHead(); err != nil {
 			log.Errorf("Failed to subscribe to head events: %v", err)
 		}
 
 		//process received messages
-		for msg := range tzkt.Listen() {
+		for msg := range dw.tzktClient.Listen() {
 			if msg.Channel == events.ChannelHead {
 				log.Info("Received head event")
 				raw, err := json.Marshal(msg.Body)
@@ -155,7 +162,6 @@ func (dw *DelegationsWatcher) WatchNewBlocks() {
 		}
 
 	}
-
 }
 
 func getDelegations(tzktUrl string, level int32, httpClient httpclient.HttpInterface) ([]types.TzktDelegationsResponse, error) {
@@ -169,6 +175,7 @@ func getDelegations(tzktUrl string, level int32, httpClient httpclient.HttpInter
 		} else {
 			url = fmt.Sprintf("%s/v1/operations/delegations?limit=%d&offset=%d&level=%d", tzktUrl, limit, offset, level)
 		}
+
 		data, err := httpClient.Get(url)
 		if err != nil {
 			return nil, err

@@ -10,6 +10,7 @@ import (
 	"github.com/ibraheemacara/tezos-delegation-service/db"
 	delegationswatcher "github.com/ibraheemacara/tezos-delegation-service/delegations_watcher"
 	"github.com/ibraheemacara/tezos-delegation-service/httpclient"
+	log "github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -24,8 +25,7 @@ func main() {
 
 	db, err := db.InitDB(cfg)
 	if err != nil {
-		fmt.Println("Error initializing database:", err)
-		return
+		log.Fatalf("Error initializing database: %v", err)
 	}
 
 	httpClient := httpclient.NewHttpClient(4 * time.Second)

@@ -5,10 +5,12 @@ import "time"
 type TzktDelegationsResponse struct {
 	Level     int32     `json:"level"`
 	Timestamp time.Time `json:"timestamp"`
-	Sender    struct {
-		Address string `json:"address"`
-	} `json:"sender"`
-	Amount int64 `json:"amount"`
+	Sender    Address   `json:"sender"`
+	Amount    int64     `json:"amount"`
+}
+
+type Address struct {
+	Address string `json:"address"`
 }
 
 type Delegation struct {
