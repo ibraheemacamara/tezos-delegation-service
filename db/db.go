@@ -95,7 +95,7 @@ func (db *DbStore) GetLastBlock() (int32, error) {
 func (db *DbStore) BulkInsertDelegations(delegations []Delegations) error {
 
 	ctx := context.Background()
-	defer db.pgxConn.Close(ctx)
+	// defer db.pgxConn.Close(ctx)
 
 	copyCount, err := db.pgxConn.CopyFrom(
 		ctx,

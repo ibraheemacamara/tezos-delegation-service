@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/ibraheemacara/tezos-delegation-service/config"
 	"github.com/ibraheemacara/tezos-delegation-service/db"
+	"github.com/ibraheemacara/tezos-delegation-service/middlewares"
 	"github.com/penglongli/gin-metrics/ginmetrics"
 	log "github.com/sirupsen/logrus"
 )
@@ -28,8 +29,8 @@ func StartServer(cfg config.Config, db db.DBInterface) {
 
 	ctrl := NewController(db)
 
-	engine.GET("/delegations", ctrl.GetDelegations)
-	engine.GET("/delegations/:year", ctrl.GetDelegations)
+	engine.GET("/delegations", ctrl.GetDelegations, middlewares.LoggerHandler(), middlewares.PromReqMetrics())
+	engine.GET("/delegations/:year", ctrl.GetDelegations, middlewares.LoggerHandler(), middlewares.PromReqMetrics())
 
 	engine.Run(fmt.Sprintf(":%v", cfg.Server.Port))
 }
