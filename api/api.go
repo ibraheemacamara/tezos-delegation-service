@@ -29,8 +29,8 @@ func StartServer(cfg config.Config, db db.DBInterface) {
 
 	ctrl := NewController(db)
 
-	engine.GET("/delegations", ctrl.GetDelegations, middlewares.LoggerHandler(), middlewares.PromReqMetrics())
-	engine.GET("/delegations/:year", ctrl.GetDelegations, middlewares.LoggerHandler(), middlewares.PromReqMetrics())
+	engine.GET("/delegations", middlewares.PromReqMetrics(), middlewares.ValidationHandler(), ctrl.GetDelegations, middlewares.LoggerHandler())
+	engine.GET("/delegations/:year", middlewares.PromReqMetrics(), middlewares.ValidationHandler(), ctrl.GetDelegations, middlewares.LoggerHandler())
 
 	engine.Run(fmt.Sprintf(":%v", cfg.Server.Port))
 }

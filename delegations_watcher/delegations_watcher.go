@@ -71,7 +71,7 @@ func (dw *DelegationsWatcher) Start() {
 
 	log.Infof("All %v delegations inserted into database", len(allDelegations))
 
-	go dw.WatchNewBlocks()
+	// go dw.WatchNewBlocks()
 }
 
 func (dw *DelegationsWatcher) WatchNewBlocks() {

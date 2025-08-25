@@ -1,6 +1,8 @@
 package api
 
 import (
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 	"github.com/ibraheemacara/tezos-delegation-service/db"
 	"github.com/ibraheemacara/tezos-delegation-service/types"
@@ -15,8 +17,8 @@ func NewController(db db.DBInterface) *Controller {
 }
 
 func (ctr *Controller) GetDelegations(ctx *gin.Context) {
-	year := ctx.Param("year")
-	if year == "" {
+	year, ok := ctx.Get("year")
+	if !ok {
 		delegations, err := ctr.db.GetDelegations()
 		if err != nil {
 			ctx.JSON(500, gin.H{"error": "Internal server error"})
@@ -33,7 +35,8 @@ func (ctr *Controller) GetDelegations(ctx *gin.Context) {
 		}
 		ctx.JSON(200, types.DelegationsResponse{Delegations: data})
 	} else {
-		delegations, err := ctr.db.GetDelegationsByYear(year)
+		yearStr := year.(int)
+		delegations, err := ctr.db.GetDelegationsByYear(strconv.Itoa(yearStr))
 		if err != nil {
 			ctx.JSON(500, gin.H{"error": "Internal server error"})
 			return
@@ -50,14 +53,3 @@ func (ctr *Controller) GetDelegations(ctx *gin.Context) {
 		ctx.JSON(200, types.DelegationsResponse{Delegations: data})
 	}
 }
-
-// func (ctr *Controller) GetDelegationsByYear(ctx *gin.Context) {
-// 	year := ctx.Param("year")
-// 	delegations, err := ctr.db.GetDelegationsByYear(year)
-// 	if err != nil {
-// 		ctx.JSON(500, gin.H{"error": "Internal server error"})
-// 		return
-// 	}
-
-// 	ctx.JSON(200, delegations)
-// }
